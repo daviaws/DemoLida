@@ -176,6 +176,7 @@ public class Environment extends EnvironmentImpl {
         }
         leafletReady = false;
         for (Leaflet leaflet : creature.getLeaflets()) {
+            if (planningModule != null && planningModule.isDelivered(leaflet.getID().toString())) continue;
             boolean complete = true;
             for (Integer[] counts : leaflet.getItems().values()) {
                 if (counts[0] - counts[1] > 0) { complete = false; break; }
@@ -213,8 +214,17 @@ public class Environment extends EnvironmentImpl {
                     if (thingAhead != null) {
                         for (Thing thing : thingAhead) {
                             if (thing.getCategory() == Constants.categoryJEWEL) {
-                                creature.putInSack(thing.getName());
-                            } else if (thing.getCategory() == Constants.categoryFOOD || thing.getCategory() == Constants.categoryNPFOOD || thing.getCategory() == Constants.categoryPFOOD) {
+                                // só coleta se for o alvo do plano
+                                if (planningModule == null || 
+                                    (planningModule.getTargetJewel() != null && 
+                                    thing.getName().equals(planningModule.getTargetJewel().getName()))) {
+                                    creature.putInSack(thing.getName());
+                                    if (planningModule != null) planningModule.onJewelCollected(thing.getName());
+                                    System.out.println("[COLETA] Joia coletada: " + thing.getName());
+                                }
+                            } else if (thing.getCategory() == Constants.categoryFOOD || 
+                                    thing.getCategory() == Constants.categoryNPFOOD || 
+                                    thing.getCategory() == Constants.categoryPFOOD) {
                                 creature.eatIt(thing.getName());
                             }
                         }

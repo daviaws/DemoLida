@@ -37,6 +37,13 @@ public class PlanningModule extends FrameworkModuleImpl implements BroadcastList
         return deliveredLeaflets.contains(leafletId);
     }
 
+    public void onJewelCollected(String jewelName) {
+        if (targetJewel != null && targetJewel.getName().equals(jewelName)) {
+            targetJewel = null;
+            System.out.println("[PLANO] Joia coletada: " + jewelName + ", aguardando próximo alvo.");
+        }
+    }
+
     private void updatePlan() {
         smParams.clear();
         smParams.put("mode", "leafletReady");
