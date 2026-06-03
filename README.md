@@ -6,17 +6,14 @@ Requirements:
 - JDK
 - Docker
 
-In order to use it, you first need to download the code and run the ws3d application:
+Run with
 
-```bash
-user$ ./ws3d.sh
+```
+docker compose up
 ```
 
-You might need to first have Docker installed on your machine, as the ws3d.sh bash script uses Docker to call the ws3d application
-Then, in a different terminal, you can do:
+Or 
 
-```bash
-user$ ./gradlew run
 ```
-
-and you will see the robot running in ws3d. 
+docker compose -f docker-compose-x.yml up
+```
