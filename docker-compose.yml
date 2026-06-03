@@ -1,0 +1,25 @@
+services:
+  ws3d:
+    image: brgsil/ws3d-coppelia
+    network_mode: host
+    privileged: true
+    environment:
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - ${XAUTHORITY}:/root/.Xauthority:ro
+
+  demolida:
+    build: .
+    depends_on:
+      - ws3d
+    network_mode: host
+    environment:
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - .:/app
+      - ${XAUTHORITY}:/root/.Xauthority:ro
+      - gradle-cache:/root/.gradle
+    command: sh -c "sleep 5 && ./gradlew run --no-daemon"
+
+volumes:
+  gradle-cache:

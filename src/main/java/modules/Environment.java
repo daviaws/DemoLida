@@ -97,6 +97,11 @@ public class Environment extends EnvironmentImpl {
         return requestedObject;
     }
 
+    @Override
+    public Object getModuleContent(Object... params) {
+        return currentAction;
+    }
+
     
     public void updateEnvironment() {
         creature.updateState();
