@@ -2,9 +2,11 @@ package modules;
 
 import edu.memphis.ccrg.lida.sensorymemory.SensoryMemoryImpl;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import ws3dproxy.model.Leaflet;
 import ws3dproxy.model.Thing;
 import ws3dproxy.model.WorldPoint;
 
@@ -17,6 +19,8 @@ public class SensoryMemory extends SensoryMemoryImpl {
     private Thing leafletJewel;
     private boolean leafletReady;
     private WorldPoint deliverySpot;
+    private List<Thing> visibleJewels;
+    private List<Leaflet> leaflets;
 
     public SensoryMemory() {
         this.sensorParam = new HashMap<>();
@@ -26,6 +30,8 @@ public class SensoryMemory extends SensoryMemoryImpl {
         this.leafletJewel = null;
         this.leafletReady = false;
         this.deliverySpot = null;
+        this.visibleJewels = new ArrayList<>();
+        this.leaflets = new ArrayList<>();
     }
 
     @SuppressWarnings("unchecked")
@@ -49,6 +55,12 @@ public class SensoryMemory extends SensoryMemoryImpl {
         sensorParam.clear();
         sensorParam.put("mode", "deliverySpot");
         deliverySpot = (WorldPoint) environment.getState(sensorParam);
+        sensorParam.clear();
+        sensorParam.put("mode", "visibleJewels");
+        visibleJewels = (List<Thing>) environment.getState(sensorParam);
+        sensorParam.clear();
+        sensorParam.put("mode", "leaflets");
+        leaflets = (List<Leaflet>) environment.getState(sensorParam);
     }
 
     @Override
@@ -73,6 +85,12 @@ public class SensoryMemory extends SensoryMemoryImpl {
                 break;
             case "deliverySpot":
                 requestedObject = deliverySpot;
+                break;
+            case "visibleJewels":
+                requestedObject = visibleJewels;
+                break;
+            case "leaflets":
+                requestedObject = leaflets;
                 break;
             default:
                 break;

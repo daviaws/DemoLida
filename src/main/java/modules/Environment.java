@@ -1,6 +1,7 @@
 package modules;
 
 import edu.memphis.ccrg.lida.environment.EnvironmentImpl;
+import edu.memphis.ccrg.lida.framework.ModuleName;
 import edu.memphis.ccrg.lida.framework.tasks.FrameworkTaskImpl;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,9 @@ public class Environment extends EnvironmentImpl {
     private String currentAction;   
     private boolean leafletReady;
     private WorldPoint deliverySpot;
+    private List<Thing> visibleJewels;
+    private List<Leaflet> leaflets;
+    private PlanningModule planningModule;
     
     public Environment() {
         this.ticksPerRun = DEFAULT_TICKS_PER_RUN;
@@ -38,11 +42,14 @@ public class Environment extends EnvironmentImpl {
         this.currentAction = "rotate";
         this.leafletReady = false;
         this.deliverySpot = null;
+        this.visibleJewels = new ArrayList<>();
+        this.leaflets = new ArrayList<>();
     }
 
     @Override
     public void init() {
         super.init();
+        planningModule = (PlanningModule) getSubmodule(ModuleName.getModuleName("PlanningModule"));
         ticksPerRun = (Integer) getParam("environment.ticksPerRun", DEFAULT_TICKS_PER_RUN);
         taskSpawner.addTask(new BackgroundTask(ticksPerRun));
         
@@ -107,6 +114,12 @@ public class Environment extends EnvironmentImpl {
             case "deliverySpot":
                 requestedObject = deliverySpot;
                 break;
+            case "visibleJewels":
+                requestedObject = visibleJewels;
+                break;
+            case "leaflets":
+                requestedObject = leaflets;
+                break;
             default:
                 break;
         }
@@ -124,26 +137,32 @@ public class Environment extends EnvironmentImpl {
         food = null;
         jewel = null;
         leafletJewel = null;
+        leaflets = creature.getLeaflets();
         thingAhead.clear();
-                
+        visibleJewels.clear();
+
         for (Thing thing : creature.getThingsInVision()) {
             if (creature.calculateDistanceTo(thing) <= Constants.OFFSET) {
                 // Identifica o objeto proximo
                 thingAhead.add(thing);
                 break;
             } else if (thing.getCategory() == Constants.categoryJEWEL) {
-                if (leafletJewel == null) {
-                    // Identifica se a joia esta no leaflet
-                    for(Leaflet leaflet: creature.getLeaflets()){
-                        if (leaflet.ifInLeaflet(thing.getMaterial().getColorName()) &&
-                                leaflet.getTotalNumberOfType(thing.getMaterial().getColorName()) > leaflet.getCollectedNumberOfType(thing.getMaterial().getColorName())){
-                            leafletJewel = thing;
-                            break;
-                        }
+                visibleJewels.add(thing);
+                if (planningModule != null) {
+                    Thing target = planningModule.getTargetJewel();
+                    if (target != null && thing.getName().equals(target.getName())) {
+                        leafletJewel = thing;
                     }
                 } else {
-                    // Identifica a joia que nao esta no leaflet
-                    jewel = thing;
+                    if (leafletJewel == null) {
+                        for (Leaflet leaflet : creature.getLeaflets()) {
+                            if (leaflet.ifInLeaflet(thing.getMaterial().getColorName()) &&
+                                    leaflet.getTotalNumberOfType(thing.getMaterial().getColorName()) > leaflet.getCollectedNumberOfType(thing.getMaterial().getColorName())) {
+                                leafletJewel = thing;
+                                break;
+                            }
+                        }
+                    }
                 }
             } else if (food == null && creature.getFuel() <= 300.0
                         && (thing.getCategory() == Constants.categoryFOOD
@@ -209,10 +228,12 @@ public class Environment extends EnvironmentImpl {
                 case "deliverLeaflet":
                     creature.move(0.0, 0.0, 0.0);
                     for (Leaflet leaflet : creature.getLeaflets()) {
+                        if (planningModule != null && planningModule.isDelivered(leaflet.getID().toString())) continue;
                         boolean complete = true;
                         for (Integer[] counts : leaflet.getItems().values())
                             if (counts[0] - counts[1] > 0) { complete = false; break; }
                         if (complete) {
+                            if (planningModule != null) planningModule.resetTarget();
                             creature.deliverLeaflet(leaflet.getID().toString());
                             System.out.println("[ENTREGA] Leaflet " + leaflet.getID() + " entregue!");
                             break;
