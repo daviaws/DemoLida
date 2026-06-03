@@ -130,6 +130,12 @@
             <associatedmodule>SensoryMemory</associatedmodule>
             <associatedmodule>PerceptualAssociativeMemory</associatedmodule>
         </task>
+        <task name="LeafletReadyDetector">
+            <class>detectors.LeafletReadyDetector</class>
+            <ticksperrun>3</ticksperrun>
+            <associatedmodule>SensoryMemory</associatedmodule>
+            <associatedmodule>PerceptualAssociativeMemory</associatedmodule>
+        </task>
         <task name="BasicAttentionCodelet">
             <class>edu.memphis.ccrg.lida.attentioncodelets.BasicAttentionCodelet
             </class>

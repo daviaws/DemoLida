@@ -10,6 +10,7 @@ import ws3dproxy.model.Creature;
 import ws3dproxy.model.Leaflet;
 import ws3dproxy.model.Thing;
 import ws3dproxy.model.World;
+import ws3dproxy.model.WorldPoint;
 import ws3dproxy.util.Constants;
 
 public class Environment extends EnvironmentImpl {
@@ -23,6 +24,8 @@ public class Environment extends EnvironmentImpl {
     private List<Thing> thingAhead;
     private Thing leafletJewel;
     private String currentAction;   
+    private boolean leafletReady;
+    private WorldPoint deliverySpot;
     
     public Environment() {
         this.ticksPerRun = DEFAULT_TICKS_PER_RUN;
@@ -33,6 +36,8 @@ public class Environment extends EnvironmentImpl {
         this.thingAhead = new ArrayList<>();
         this.leafletJewel = null;
         this.currentAction = "rotate";
+        this.leafletReady = false;
+        this.deliverySpot = null;
     }
 
     @Override
@@ -51,6 +56,11 @@ public class Environment extends EnvironmentImpl {
             Thread.sleep(4000);
             creature.updateState();
             System.out.println("DemoLIDA has started...");
+            World.createDeliverySpot(
+                proxy.getWorld().getEnvironmentWidth() / 2,
+                proxy.getWorld().getEnvironmentHeight() / 2
+            );
+            deliverySpot = World.getDeliverySpot();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -90,6 +100,12 @@ public class Environment extends EnvironmentImpl {
                 break;
             case "leafletJewel":
                 requestedObject = leafletJewel;
+                break;
+            case "leafletReady":
+                requestedObject = leafletReady;
+                break;
+            case "deliverySpot":
+                requestedObject = deliverySpot;
                 break;
             default:
                 break;
@@ -139,6 +155,14 @@ public class Environment extends EnvironmentImpl {
             }
            
         }
+        leafletReady = false;
+        for (Leaflet leaflet : creature.getLeaflets()) {
+            boolean complete = true;
+            for (Integer[] counts : leaflet.getItems().values()) {
+                if (counts[0] - counts[1] > 0) { complete = false; break; }
+            }
+            if (complete) { leafletReady = true; break; }
+        }
     }
     
     
@@ -174,6 +198,24 @@ public class Environment extends EnvironmentImpl {
                             } else if (thing.getCategory() == Constants.categoryFOOD || thing.getCategory() == Constants.categoryNPFOOD || thing.getCategory() == Constants.categoryPFOOD) {
                                 creature.eatIt(thing.getName());
                             }
+                        }
+                    }
+                    this.resetState();
+                    break;
+                case "gotoDeliverySpot":
+                    if (deliverySpot != null)
+                        creature.moveto(4.0, deliverySpot.getX(), deliverySpot.getY());
+                    break;
+                case "deliverLeaflet":
+                    creature.move(0.0, 0.0, 0.0);
+                    for (Leaflet leaflet : creature.getLeaflets()) {
+                        boolean complete = true;
+                        for (Integer[] counts : leaflet.getItems().values())
+                            if (counts[0] - counts[1] > 0) { complete = false; break; }
+                        if (complete) {
+                            creature.deliverLeaflet(leaflet.getID().toString());
+                            System.out.println("[ENTREGA] Leaflet " + leaflet.getID() + " entregue!");
+                            break;
                         }
                     }
                     this.resetState();
